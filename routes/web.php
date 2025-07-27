@@ -13,6 +13,15 @@
 |
 */
 
-$router->get('/', function () use ($router) {
-    return $router->app->version();
+// Ruta de prueba del Gateway
+$router->get('/', function () {
+    return 'API Gateway funcionando correctamente.';
 });
+
+// Rutas que apuntan a miramar-productos
+$router->addRoute(['GET', 'POST', 'PUT', 'DELETE'], '/servicios[/{any:.*}]', 'GatewayController@forwardToProductos');
+$router->addRoute(['GET', 'POST', 'PUT', 'DELETE'], '/paquetes[/{any:.*}]', 'GatewayController@forwardToProductos');
+
+// Rutas que apuntan a miramar-ventas-clientes
+$router->addRoute(['GET', 'POST', 'PUT', 'DELETE'], '/clientes[/{any:.*}]', 'GatewayController@forwardToVentasClientes');
+$router->addRoute(['GET', 'POST', 'PUT', 'DELETE'], '/ventas[/{any:.*}]', 'GatewayController@forwardToVentasClientes');
