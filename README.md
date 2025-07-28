@@ -1,26 +1,84 @@
-# Lumen PHP Framework
+# API Gateway: MiraMar 🚪
 
-[![Build Status](https://travis-ci.org/laravel/lumen-framework.svg)](https://travis-ci.org/laravel/lumen-framework)
-[![Total Downloads](https://img.shields.io/packagist/dt/laravel/lumen-framework)](https://packagist.org/packages/laravel/lumen-framework)
-[![Latest Stable Version](https://img.shields.io/packagist/v/laravel/lumen-framework)](https://packagist.org/packages/laravel/lumen-framework)
-[![License](https://img.shields.io/packagist/l/laravel/lumen)](https://packagist.org/packages/laravel/lumen-framework)
+Este servicio actúa como un **API Gateway** y es el único punto de entrada (Single Point of Entry) para todo el sistema de la agencia MiraMar. Su función principal es actuar como un **proxy inverso**, recibiendo las peticiones de los clientes y redirigiéndolas al microservicio interno correspondiente (`miramar-productos` o `miramar-ventas-clientes`).
 
-Laravel Lumen is a stunningly fast PHP micro-framework for building web applications with expressive, elegant syntax. We believe development must be an enjoyable, creative experience to be truly fulfilling. Lumen attempts to take the pain out of development by easing common tasks used in the majority of web projects, such as routing, database abstraction, queueing, and caching.
+---
 
-> **Note:** In the years since releasing Lumen, PHP has made a variety of wonderful performance improvements. For this reason, along with the availability of [Laravel Octane](https://laravel.com/docs/octane), we no longer recommend that you begin new projects with Lumen. Instead, we recommend always beginning new projects with [Laravel](https://laravel.com).
+## Diagrama de Arquitectura
 
-## Official Documentation
+![Diagrama de Flujo](/img/DiagramaFlujo.jpg "Diagrama de Flujo")
 
-Documentation for the framework can be found on the [Lumen website](https://lumen.laravel.com/docs).
+---
 
-## Contributing
+## Tecnologías Utilizadas ⚙️
 
-Thank you for considering contributing to Lumen! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+* **Framework**: Lumen (PHP)
+* **Cliente HTTP**: Guzzle para el reenvío de peticiones.
+* **Gestor de Dependencias**: Composer
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Lumen, please send an e-mail to Taylor Otwell at taylor@laravel.com. All security vulnerabilities will be promptly addressed.
+## Instalación
 
-## License
+1.  **Clonar el repositorio**
+    ```bash
+    git clone https://github.com/Tate-147/miramar-api-gateway.git
+    cd miramar-api-gateway
+    ```
 
-The Lumen framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+2.  **Instalar dependencias**
+    ```bash
+    composer install
+    ```
+    *(No se requiere configuración de base de datos ni migraciones para este servicio).*
+
+---
+
+## Ejecución 🚀
+
+Para que el Gateway funcione, los microservicios de backend **deben estar corriendo** en sus respectivos puertos.
+
+Inicia los 3 servicios, cada uno en una terminal separada:
+
+1.  **Servicio de Productos:**
+    ```bash
+    # En la carpeta miramar-productos
+    php -S localhost:8001 -t public
+    ```
+2.  **Servicio de Ventas y Clientes:**
+    ```bash
+    # En la carpeta miramar-ventas-clientes
+    php -S localhost:8002 -t public
+    ```
+3.  **API Gateway:**
+    ```bash
+    # En la carpeta miramar-api-gateway
+    php -S localhost:8000 -t public
+    ```
+
+---
+
+## Reglas de Enrutamiento
+
+El Gateway redirige las peticiones de la siguiente manera:
+
+| Petición Entrante al Gateway | Microservicio de Destino |
+| ---------------------------- | ------------------------ |
+| `http://localhost:8000/servicios[/**]` | `http://localhost:8001/servicios[/**]` |
+| `http://localhost:8000/paquetes[/**]` | `http://localhost:8001/paquetes[/**]` |
+| `http://localhost:8000/clientes[/**]` | `http://localhost:8002/clientes[/**]` |
+| `http://localhost:8000/ventas[/**]`   | `http://localhost:8002/ventas[/**]`   |
+
+---
+
+## Uso de la API
+
+A partir de ahora, todas las interacciones con el sistema se deben realizar a través del Gateway en el puerto `8000`.
+
+#### **Ejemplo 1: Obtener todos los servicios**
+* **Petición:** `GET http://localhost:8000/servicios`
+* **Flujo:** Gateway (`:8000`) recibe la petición y la reenvía a `miramar-productos` (`:8001`).
+
+#### **Ejemplo 2: Registrar una venta**
+* **Petición:** `POST http://localhost:8000/ventas`
+* **Flujo:** Gateway (`:8000`) recibe la petición y la reenvía a `miramar-ventas-clientes` (`:8002`), el cual a su vez contactará a `miramar-productos` (`:8001`) para obtener los costos.
