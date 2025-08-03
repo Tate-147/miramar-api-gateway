@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  #--- Servicio del API Gateway ---
+  gateway_app:
+    build: . # Construye desde el Dockerfile en la carpeta actual
+    container_name: miramar_gateway
+    ports:
+      - "8000:8080" # Mapea el puerto 8000 de tu PC al 8080 del contenedor
+    depends_on:
+      - productos_app
+      - ventas_app
+
+  #--- Servicio de Productos ---
+  productos_app:
+    build: ../miramar-productos # Ruta relativa a la carpeta del microservicio
+    container_name: miramar_productos_app
+    environment:
+      - DB_HOST=host.docker.internal # Usa host.docker.internal para acceder a la base de datos en el host
+      - DB_DATABASE=miramar-productos
+      - DB_USERNAME=root
+      - DB_PASSWORD=
+    volumes:
+      - ../miramar-productos:/var/www/html # Sincroniza el código para desarrollo
+
+
+  #--- Servicio de Ventas y Clientes ---
+  ventas_app:
+    build: ../miramar-ventas-clientes
+    container_name: miramar_ventas_clientes_app
+    environment:
+      - DB_HOST=host.docker.internal # Usa host.docker.internal para acceder a la base de datos en el host
+      - DB_DATABASE=miramar-ventas-clientes
+      - DB_USERNAME=root
+      - DB_PASSWORD=
+    volumes:
+      - ../miramar-ventas-clientes:/var/www/html
+
+volumes: {}

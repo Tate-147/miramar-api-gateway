@@ -82,3 +82,70 @@ A partir de ahora, todas las interacciones con el sistema se deben realizar a tr
 #### **Ejemplo 2: Registrar una venta**
 * **Petición:** `POST http://localhost:8000/ventas`
 * **Flujo:** Gateway (`:8000`) recibe la petición y la reenvía a `miramar-ventas-clientes` (`:8002`), el cual a su vez contactará a `miramar-productos` (`:8001`) para obtener los costos.
+
+---
+
+## Docker 🐋
+
+Se incluye el Dockerfile (archivo con las instrucciones para construir la imagen) y el docker-compose.yml (archivo orquestador, define que contenedores se ejecutan, como se conectan entre sí y que recursos necesitan)
+
+## Ejecución con Docker y Docker Compose 🐳
+
+El proyecto está completamente contenerizado, lo que permite levantar toda la arquitectura de microservicios con un único comando.
+
+### Prerrequisitos
+* Tener **Docker** instalado.
+* Tener **Docker Compose** instalado.
+
+### Estructura de Carpetas
+Para que `docker-compose.yml` funcione correctamente, se debe respetar la siguiente estructura de carpetas, donde los tres proyectos se encuentran al mismo nivel:
+
+```
+proyecto-miramar/
+├── miramar-api-gateway/
+│   ├── docker-compose.yml
+│   └── Dockerfile
+│   └── ... (otros archivos del gateway)
+│
+├── miramar-productos/
+│   └── Dockerfile
+│   └── ... (archivos del servicio de productos)
+│
+└── miramar-ventas-clientes/
+    └── Dockerfile
+    └── ... (archivos del servicio de ventas)
+```
+
+### Archivos de Configuración
+Antes de ejecutar, asegúrate de que los siguientes archivos estén configurados como se indica:
+
+1.  **`Dockerfile`**: Cada uno de los 3 proyectos debe tener su propio `Dockerfile` en la raíz.
+
+2.  **`GatewayController.php` en `miramar-api-gateway`**: Las URLs de los servicios deben apuntar a los nombres de los contenedores y sus puertos internos.
+    ```php
+    $baseUri = 'http://productos_app:8080';
+    $baseUri = 'http://ventas_app:8080';
+    ```
+
+3.  **`VentaSeeder.php` en `miramar-ventas-clientes`**: La URL de los productos debe apuntar al nombre del contenedor y su puerto interno.
+    ```php
+    $productosServiceUrl = 'http://productos_app:8080';
+    ```
+### Ejecución
+Para levantar todo el sistema, sigue estos pasos:
+
+1.  Abre una terminal y navega a la carpeta raíz del `miramar-api-gateway` (donde se encuentra el archivo `docker-compose.yml`).
+2.  Ejecuta el siguiente comando:
+    ```bash
+    docker-compose up --build
+    ```
+
+Este comando leerá el archivo `docker-compose.yml`, construirá las imágenes de tus tres servicios, creará los contenedores y lo pondrá todo en marcha. La primera vez puede tardar unos minutos.
+
+### Probar la Aplicación
+Una vez que los contenedores estén corriendo, toda la aplicación estará disponible a través del puerto del API Gateway:
+
+* **URL Base:** `http://localhost:8000`
+* **Ejemplo:** Una petición `GET` a `http://localhost:8000/clientes` será redirigida por el gateway al servicio `miramar-ventas-clientes` y te devolverá la lista de clientes.
+
+Para detener todos los servicios, simplemente presiona `Ctrl+C` en la terminal donde ejecutaste el comando.
